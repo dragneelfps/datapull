@@ -16,10 +16,14 @@
 
 package core
 
+import java.io.ByteArrayOutputStream
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
 import java.time._
 import java.util.{Scanner, UUID}
+import java.util.zip.GZIPOutputStream
 
 import com.datastax.driver.core.utils.UUIDs
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -396,6 +400,36 @@ object DataPull {
       sb.appendAll(hexChars, 18, 2)
       sb.appendAll(hexChars, 16, 2)
       sb.toString
+    }
+  }
+
+
+  def gzipFromString(str: String): Array[Byte] = {
+    if (str == null) null
+    else {
+      val output = new ByteArrayOutputStream
+      val gzip = new GZIPOutputStream(output)
+      gzip.write(str.getBytes(StandardCharsets.UTF_8))
+      output.toByteArray()
+    }
+  }
+
+  def ungzipToString(bytes: Array[Byte]): String = {
+    if (bytes == null) null
+    else {
+      val input = new ByteArrayInputStream(bytes)
+      val gzip = new GZIPInputStream(input, bytes.length)
+      val output = new ByteArrayOutputStream
+
+      var res = 0
+      val buf = new Array[Byte](1024)
+      while ( res >= 0) {
+        res = gzip.read(buf, 0, buf.length)
+        if (res > 0) {
+          output.write(buf, 0, res)
+        }
+      }
+      output.toString(StandardCharsets.UTF_8)
     }
   }
 }
